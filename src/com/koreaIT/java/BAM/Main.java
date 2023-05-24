@@ -5,12 +5,21 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Main {
+	
+	static List<Article> articles;
+	
+	static {
+		articles = new ArrayList<>();
+	}
+	
 	public static void main(String[] args) {
 		System.out.println("== 프로그램 시작 ==");
 		Scanner sc = new Scanner(System.in);
-		int lastArticleId = 0;
 		
-		List<Article> articles = new ArrayList<>();
+		makeTestData();
+		
+		int lastArticleId = 3;
+
 		
 		while(true) {
 			System.out.printf("명령어) ");	
@@ -48,11 +57,11 @@ public class Main {
 					System.out.println("게시글이 없습니다.");				
 					continue;
 				}
-				System.out.println("번호	|	제목	|	날짜");
+				System.out.println("번호	|	제목		|		날짜		|	조회수	");
 
 				for(int i = articles.size() - 1; i >= 0; i--) {
 					Article article = articles.get(i);
-					System.out.printf("%d	|     %s	|	%s	\n", article.id, article.title, article.regDate);
+					System.out.printf("%d	|      %s		|	%s	|	 %d	\n", article.id, article.title, article.regDate,article.count);
 				}
 //			split, startWith
 			} else if(cmd.startsWith("article detail ")){
@@ -68,6 +77,7 @@ public class Main {
 					if(article.id == id) {
 //						foundArticle = true;
 						foundArticle = article;
+						foundArticle.count += 1;
 						break;
 					}
 				}
@@ -80,6 +90,7 @@ public class Main {
 				System.out.println(String.format("날짜 : %s", foundArticle.regDate));
 				System.out.println(String.format("제목 : %s", foundArticle.title));
 				System.out.println(String.format("내용 : %s", foundArticle.body));
+				System.out.println(String.format("조회수 : %d", foundArticle.count));
 				
 			}else if(cmd.startsWith("article delete ")){
 				
@@ -146,6 +157,16 @@ public class Main {
 		
 		System.out.println("== 프로그램 끝 ==");
 	}
+
+	static void makeTestData() {
+		System.out.println("테스트를 위한 데이터를 생성합니다.");
+	
+		articles.add(new Article(1, Util.getNowDateStr(), "test1", "test1", 10));
+		articles.add(new Article(2, Util.getNowDateStr(), "test2", "test2", 20));
+		articles.add(new Article(3, Util.getNowDateStr(), "test3", "test3", 30));
+	}
+	
+	
 }
 
 class Article{
@@ -153,11 +174,17 @@ class Article{
 	String regDate;
 	String title;
 	String body;
+	int count;
 	
 	Article(int id,String regDate, String title, String body){
+		this(id, regDate, title, body, 0);
+	}
+	
+	Article(int id,String regDate, String title, String body, int count){
 		this.id = id;
 		this.regDate = regDate;
 		this.title = title;
 		this.body = body;
+		this.count = count;
 	}
 }
