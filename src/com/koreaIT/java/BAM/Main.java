@@ -107,6 +107,35 @@ public class Main {
 				System.out.println(String.format("%d번 글이 삭제되었습니다.", id));
 				
 				
+			}else if(cmd.startsWith("article modify ")){
+				
+				String[] cmdBits = cmd.split(" ");
+				int id = Integer.parseInt(cmdBits[2]);
+				Article foundArticle = null;
+				
+				for(int i = 0; i < articles.size(); i++) {
+					Article article = articles.get(i);
+					
+					if(article.id == id) {
+						foundArticle = article;
+						break;
+					}
+				}
+				if(foundArticle == null) {
+					System.out.println(String.format("%d번 게시글은 존재하지 않습니다.", id));
+					continue;
+				}
+				
+				System.out.printf("수정할 제목 : ");
+				String title = sc.nextLine();
+				System.out.printf("수정할 내용 : ");
+				String body = sc.nextLine();
+				foundArticle.title = title;
+				foundArticle.body = body;
+				
+				System.out.println(String.format("%d번 글이 수정되었습니다.", id));
+				
+				
 			}else {
 				System.out.println(String.format("%s(은)는 존재하지 않는 명령어입니다.", cmd));
 			}
