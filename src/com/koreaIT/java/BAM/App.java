@@ -5,13 +5,16 @@ import java.util.List;
 import java.util.Scanner;
 
 import com.koreaIT.java.BAM.dto.Article;
+import com.koreaIT.java.BAM.dto.Member;
 import com.koreaIT.java.BAM.util.Util;
 
 public class App {
 	private List<Article> articles;
+	private List<Member> members;
 	
 	App() {
 		articles = new ArrayList<>();
+		members = new ArrayList<>();
 	}
 	
 	public void run() {
@@ -21,7 +24,7 @@ public class App {
 		makeTestData();
 		
 		int lastArticleId = 3;
-		
+		int lastMemberId = 0;
 		
 		while(true) {
 			System.out.printf("명령어) ");	
@@ -35,8 +38,65 @@ public class App {
 			if(cmd.equals("exit")) {
 				break;
 			} 
+			if(cmd.equals("member join")) {
+				
+				String regDate = Util.getNowDateStr();
+				String loginId = null;
+//				Boolean idCheck = true;
+				
+				while(true) {
+					System.out.printf("로그인 아이디 : ");
+					loginId = sc.nextLine().trim();
+						
+					if(isLoginIdDup(loginId) == false) {
+						System.out.println("이미 사용중인 아이디입니다.");
+						continue;
+					}
+//					for(Member member : members) {
+//						if(member.id.equals(loginId)) {
+//							System.out.println("아이디가 중복되었습니다.");
+//							idCheck = false;
+//						}
+//					}
+//					
+//					if(idCheck == false) {
+//						idCheck = true;
+//						continue;
+//					}
+//					
+					System.out.println(String.format("%s은(는) 사용가능한 아이디입니다.", loginId));
+					break;
+				}
+				String loginPass = null;
+				
+				while(true) {
+					System.out.printf("로그인 비밀번호 : ");
+					loginPass = sc.nextLine().trim();
+					System.out.printf("로그인 비밀번호 확인 : ");
+					String passCheck = sc.nextLine().trim();
+					
+					if(loginPass.equals(passCheck) == false) {
+						System.out.println("비밀 번호가 다릅니다.");
+						continue;
+					}
+					break;
+					
+				}
 			
-			if(cmd.equals("article write")) {
+				System.out.printf("이름 : ");
+				String name = sc.nextLine();
+				
+				
+				int sequence = lastMemberId + 1;
+				lastMemberId = sequence;
+				
+				Member member = new Member(sequence, regDate, loginId, loginPass, name);
+				
+				members.add(member);
+				
+				System.out.println(String.format("%s 회원님 환영합니다.", name));
+				
+			}else if(cmd.equals("article write")) {
 				
 				String regDate = Util.getNowDateStr();
 				
@@ -47,22 +107,47 @@ public class App {
 				int id = lastArticleId + 1;
 				lastArticleId = id;
 				
+				
 				Article article = new Article(id, regDate, title, body);
 				
 				articles.add(article);
 				
 				System.out.printf("%d번글이 생성되었습니다.\n", id);
 				
-			}else if(cmd.equals("article list")) {
+			}else if(cmd.startsWith("article list")) {
 				
-				if(articles.size() == 0) {
-					System.out.println("게시글이 없습니다.");				
+				if (articles.size() == 0) {
+					System.out.println("게시글이 없습니다");
 					continue;
 				}
+
+				String searchKeyword = cmd.substring("article list".length()).trim();
+
+				List<Article> forPrintArticles = articles;
+
+				if (searchKeyword.length() > 0) {
+					forPrintArticles = new ArrayList<>();
+
+					for (Article article : articles) {
+						if (article.title.contains(searchKeyword)) {
+							forPrintArticles.add(article);
+						}
+					}
+
+					if (forPrintArticles.size() == 0) {
+						System.out.println("검색결과가 없습니다");
+						continue;
+					}
+				}
+				
 				System.out.println("번호	|	제목		|		날짜		|	조회수	");
 				
-				for(int i = articles.size() - 1; i >= 0; i--) {
-					Article article = articles.get(i);
+				if(forPrintArticles.size() != articles.size()) {
+					System.out.println(String.format("검색어 : %s", searchKeyword));
+				}
+				
+				for(int i = forPrintArticles.size() - 1; i >= 0; i--) {
+					Article article = forPrintArticles.get(i);
 					System.out.printf("%d	|      %s		|	%s	|	 %d	\n", article.id, article.title, article.regDate,article.count);
 				}
 //		split, startWith
@@ -165,5 +250,15 @@ public class App {
 			}
 		}
 		return null;
+	}
+	
+	private boolean isLoginIdDup(String loginId) {
+		for(Member member : members) {
+			
+			if(member.id.equals(loginId)) {
+				return false;
+			}
+		}
+		return true;
 	}
 }
