@@ -135,6 +135,10 @@ public class App {
 				System.out.println("로그인 상태가 아닙니다.");
 				
 			}else if(cmd.equals("article write")) {
+				if(isLogined() == false) {
+					System.out.println("로그인 후 이용해주세요.");
+					continue;
+				}
 				
 				String regDate = Util.getNowDateStr();
 				
@@ -145,9 +149,8 @@ public class App {
 				int id = lastArticleId + 1;
 				lastArticleId = id;
 				
-				
-				Article article = new Article(id, regDate, title, body);
-				
+				Article article = new Article(id, regDate, this.loginedMember.num, title, body);
+			
 				articles.add(article);
 				
 				System.out.printf("%d번글이 생성되었습니다.\n", id);
@@ -178,7 +181,7 @@ public class App {
 					}
 				}
 				
-				System.out.println("번호	|	제목		|		날짜		|	조회수	");
+				System.out.println("번호	|	제목		|		날짜		|	작성자		|	조회수	");
 				
 				if(forPrintArticles.size() != articles.size()) {
 					System.out.println(String.format("검색어 : %s", searchKeyword));
@@ -186,10 +189,20 @@ public class App {
 				
 				for(int i = forPrintArticles.size() - 1; i >= 0; i--) {
 					Article article = forPrintArticles.get(i);
-					System.out.printf("%d	|      %s		|	%s	|	 %d	\n", article.id, article.title, article.regDate,article.count);
+					
+					String writeName = null;
+					
+					for(Member member : members) {
+						if(member.num == article.memberId) {
+							writeName = member.name;
+						}
+					}
+					
+					System.out.printf("%d	|      %s		|	%s	|	 %s		|	%d	\n", article.id, article.title, article.regDate,writeName,article.count);
 				}
 //		split, startWith
 			} else if(cmd.startsWith("article detail ")){
+			
 				String[] cmdBits = cmd.split(" ");
 				int id = Integer.parseInt(cmdBits[2]);
 				
@@ -202,42 +215,53 @@ public class App {
 					continue;
 				}
 				
+				String writerName = null;
+				
+				for(Member member : members) {
+					if(foundArticle.memberId == member.num) {
+						writerName = member.name;
+					}
+					
+				}
+				
+				
 				foundArticle.count += 1;
 				
 				System.out.println("== 게시글 상세보기 ==");
 				System.out.println(String.format("번호 : %d", foundArticle.id));				
 				System.out.println(String.format("날짜 : %s", foundArticle.regDate));
+				System.out.println(String.format("작성자 : %s", writerName));		
 				System.out.println(String.format("제목 : %s", foundArticle.title));
 				System.out.println(String.format("내용 : %s", foundArticle.body));
 				System.out.println(String.format("조회수 : %d", foundArticle.count));
 				
 			}else if(cmd.startsWith("article delete ")){
-				
-				String[] cmdBits = cmd.split(" ");
-				int id = Integer.parseInt(cmdBits[2]);
-//			Article foundArticle = null;
-				int foundIndex = -1;
-				
-				for(int i = 0; i < articles.size(); i++) {
-					Article article = articles.get(i);
-					
-					if(article.id == id) {
-						foundIndex = i;
-//					foundArticle = article;
-						break;
-					}
-				}
-				if(foundIndex == -1) {
-					System.out.println(String.format("%d번 게시글은 존재하지 않습니다.", id));
+				if(isLogined() == false) {
+					System.out.println("로그인 후 이용해주세요.");
 					continue;
 				}
 				
-				articles.remove(foundIndex);
-//			articles.remove(foundArticle);
-				System.out.println(String.format("%d번 글이 삭제되었습니다.", id));
+				String[] cmdBits = cmd.split(" ");
+				int id = Integer.parseInt(cmdBits[2]);
+				Article foundArticle = callData(id);
 				
+				if (foundArticle == null) {
+					System.out.printf("%d번 게시글은 존재하지 않습니다\n", id);
+					continue;
+				}
+				
+				if(isAuthority(foundArticle.memberId)) {
+					articles.remove(foundArticle);
+					System.out.printf("%d번 게시글이 삭제되었습니다\n", id);
+					continue;
+				}
+				System.out.println("권한이 없습니다.");
 				
 			}else if(cmd.startsWith("article modify ")){
+				if(isLogined() == false) {
+					System.out.println("로그인 후 이용해주세요.");
+					continue;
+				}
 				
 				String[] cmdBits = cmd.split(" ");
 				int id = Integer.parseInt(cmdBits[2]);
@@ -248,15 +272,20 @@ public class App {
 					continue;
 				}
 				
-				System.out.printf("수정할 제목 : ");
-				String title = sc.nextLine();
-				System.out.printf("수정할 내용 : ");
-				String body = sc.nextLine();
-				foundArticle.title = title;
-				foundArticle.body = body;
+				if(isAuthority(foundArticle.memberId)) {
+					
+					System.out.printf("수정할 제목 : ");
+					String title = sc.nextLine();
+					System.out.printf("수정할 내용 : ");
+					String body = sc.nextLine();
+					foundArticle.title = title;
+					foundArticle.body = body;
+			
+					System.out.println(String.format("%d번 글이 수정되었습니다.", id));
+					continue;
+				}
 				
-				System.out.println(String.format("%d번 글이 수정되었습니다.", id));
-				
+				System.out.println("권한이 없습니다.");
 				
 			}else {
 				System.out.println(String.format("%s(은)는 존재하지 않는 명령어입니다.", cmd));
@@ -274,9 +303,9 @@ public class App {
 	private void makeTestData() {
 		System.out.println("테스트를 위한 데이터를 생성합니다.");
 		
-		articles.add(new Article(1, Util.getNowDateStr(), "test1", "test1", 10));
-		articles.add(new Article(2, Util.getNowDateStr(), "test2", "test2", 20));
-		articles.add(new Article(3, Util.getNowDateStr(), "test3", "test3", 30));
+		articles.add(new Article(1, Util.getNowDateStr(),1, "test1", "test1", 10));
+		articles.add(new Article(2, Util.getNowDateStr(),2, "test2", "test2", 20));
+		articles.add(new Article(3, Util.getNowDateStr(),2, "test3", "test3", 30));
 		members.add(new Member(1, Util.getNowDateStr(), "test1", "test1", "kim"));
 		members.add(new Member(2, Util.getNowDateStr(), "test2", "test2", "park"));
 		members.add(new Member(3, Util.getNowDateStr(), "test3", "test3", "lee"));
@@ -314,5 +343,10 @@ public class App {
 	
 	private boolean isLogined() {
 		return this.loginedMember != null;
+	}
+	
+	private boolean isAuthority(int memberId) {
+		
+		return memberId == this.loginedMember.num;
 	}
 }
